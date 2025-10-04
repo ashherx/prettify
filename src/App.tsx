@@ -1,8 +1,21 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { domToPng } from 'modern-screenshot';
-import { Download, Upload, Maximize, PanelTop, CornerUpRight, Cloud, Sun, SunDim, Twitter, X, Copy, Check } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import ProductHuntBadge from './ProductHuntBadge';
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { domToPng } from "modern-screenshot";
+import {
+  Download,
+  Upload,
+  Maximize,
+  PanelTop,
+  CornerUpRight,
+  Cloud,
+  Sun,
+  SunDim,
+  Twitter,
+  X,
+  Copy,
+  Check,
+} from "lucide-react";
+import confetti from "canvas-confetti";
+import ProductHuntBadge from "./ProductHuntBadge";
 
 interface EditorState {
   screenshot: string | null;
@@ -13,47 +26,155 @@ interface EditorState {
   shadowIntensity: number;
   containerWidth: number;
   containerHeight: number;
-  activeTab: 'macOS' | 'Gradients' | 'Wallpapers';
+  activeTab: "macOS" | "Gradients" | "Wallpapers";
   blur: number;
 }
 
 const wallpapers: { name: string; background: string }[] = [
-  { name: 'Sierra', background: 'url(https://images.unsplash.com/photo-1511300636408-a63a89df3482)' },
-  { name: 'Ocean Mist', background: 'url(https://images.unsplash.com/photo-1505144808419-1957a94ca61e)' },
-  { name: 'Desert Dunes', background: 'url(https://images.unsplash.com/photo-1547234935-80c7145ec969)' },
-  { name: 'Smooth Waves', background: 'url(https://images.unsplash.com/photo-1505820013142-f86a3439c5b2)' },
-  { name: 'Cloudy Peaks', background: 'url(https://images.unsplash.com/photo-1536244636800-a3f74db0f3cf)' },
-  { name: 'Misty Forest', background: 'url(https://images.unsplash.com/photo-1542273917363-3b1817f69a2d)' },
-  { name: 'Pastel Sky', background: 'url(https://images.unsplash.com/photo-1517483000871-1dbf64a6e1c6)' },
-  { name: 'Gentle Sunrise', background: 'url(https://images.unsplash.com/photo-1566228015668-4c45dbc4e2f5)' },
-  { name: 'Lush Green', background: 'url(https://images.unsplash.com/photo-1527254436800-a3f74db0f3cf)' },
+  {
+    name: "Sierra",
+    background:
+      "url(https://images.unsplash.com/photo-1511300636408-a63a89df3482)",
+  },
+  {
+    name: "Ocean Mist",
+    background:
+      "url(https://images.unsplash.com/photo-1505144808419-1957a94ca61e)",
+  },
+  {
+    name: "Desert Dunes",
+    background:
+      "url(https://images.unsplash.com/photo-1547234935-80c7145ec969)",
+  },
+  {
+    name: "Smooth Waves",
+    background:
+      "url(https://images.unsplash.com/photo-1505820013142-f86a3439c5b2)",
+  },
+  {
+    name: "Cloudy Peaks",
+    background:
+      "url(https://images.unsplash.com/photo-1536244636800-a3f74db0f3cf)",
+  },
+  {
+    name: "Misty Forest",
+    background:
+      "url(https://images.unsplash.com/photo-1542273917363-3b1817f69a2d)",
+  },
+  {
+    name: "Pastel Sky",
+    background:
+      "url(https://images.unsplash.com/photo-1517483000871-1dbf64a6e1c6)",
+  },
+  {
+    name: "Gentle Sunrise",
+    background:
+      "url(https://images.unsplash.com/photo-1566228015668-4c45dbc4e2f5)",
+  },
+  {
+    name: "Lush Green",
+    background:
+      "url(https://images.unsplash.com/photo-1527254436800-a3f74db0f3cf)",
+  },
 ];
 
 const macOSPresets: { name: string; background: string }[] = [
-  { name: 'Big Sur 2', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/macos-big-sur-apple-layers-fluidic-colorful-wwdc-stock-3840x2160-1455.jpg)' },
-  { name: 'Monterey', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/macos-monterey-stock-black-dark-mode-layers-5k-3840x2160-5889.jpg)' },
-  { name: 'Monterey 2', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/macos-monterey-wwdc-21-stock-5k-3840x2160-5584.jpg)' },
-  { name: 'Sequoia Blue Orage', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sequoia-blue-orange.jpg)' },
-  { name: 'Sequoia Blue', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sequoia-blue.jpg)' },
-  { name: 'Sonama Clouds', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-clouds.jpg)' },
-  { name: 'Sonama Evening', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-evening.jpg)' },
-  { name: 'Sonama from above', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-from-above.jpg)' },
-  { name: 'Sonama River', background: 'url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-river.jpg)' },
+  {
+    name: "Big Sur 2",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/macos-big-sur-apple-layers-fluidic-colorful-wwdc-stock-3840x2160-1455.jpg)",
+  },
+  {
+    name: "Monterey",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/macos-monterey-stock-black-dark-mode-layers-5k-3840x2160-5889.jpg)",
+  },
+  {
+    name: "Monterey 2",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/macos-monterey-wwdc-21-stock-5k-3840x2160-5584.jpg)",
+  },
+  {
+    name: "Sequoia Blue Orage",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sequoia-blue-orange.jpg)",
+  },
+  {
+    name: "Sequoia Blue",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sequoia-blue.jpg)",
+  },
+  {
+    name: "Sonama Clouds",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-clouds.jpg)",
+  },
+  {
+    name: "Sonama Evening",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-evening.jpg)",
+  },
+  {
+    name: "Sonama from above",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-from-above.jpg)",
+  },
+  {
+    name: "Sonama River",
+    background:
+      "url(https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/abstract/sonoma-river.jpg)",
+  },
 ];
 
 const gradientPresets: { name: string; background: string }[] = [
-  { name: 'Purple Blend', background: 'linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)' },
-  { name: 'Ocean Blue', background: 'linear-gradient(160deg, #0093E9 0%, #80D0C7 100%)' },
-  { name: 'Lavender Haze', background: 'linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%)' },
-  { name: 'Peach Sunset', background: 'linear-gradient(62deg, #FBAB7E 0%, #F7CE68 100%)' },
-  { name: 'Lime Light', background: 'linear-gradient(45deg, #85FFBD 0%, #FFFB7D 100%)' },
-  { name: 'Pink Lemonade', background: 'linear-gradient(45deg, #FBDA61 0%, #FF5ACD 100%)' },
-  { name: 'Ocean Blue', background: 'linear-gradient(to right, #2E3192, #1BFFFF)' },
-  { name: 'Sanguine', background: 'linear-gradient(to right, #D4145A, #FBB03B)' },
-  { name: 'Lusty Lavender', background: 'linear-gradient(to right, #662D8C, #ED1E79)' },
-  { name: 'Emerald Water', background: 'linear-gradient(to right, #348F50, #56B4D3)' },
-  { name: 'Lemon Twist', background: 'linear-gradient(to right, #3CA55C, #B5AC49)' },
-  { name: 'Frozen Berry', background: 'linear-gradient(to right, #5C258D, #4389A2)' },
+  {
+    name: "Purple Blend",
+    background: "linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)",
+  },
+  {
+    name: "Ocean Blue",
+    background: "linear-gradient(160deg, #0093E9 0%, #80D0C7 100%)",
+  },
+  {
+    name: "Lavender Haze",
+    background: "linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%)",
+  },
+  {
+    name: "Peach Sunset",
+    background: "linear-gradient(62deg, #FBAB7E 0%, #F7CE68 100%)",
+  },
+  {
+    name: "Lime Light",
+    background: "linear-gradient(45deg, #85FFBD 0%, #FFFB7D 100%)",
+  },
+  {
+    name: "Pink Lemonade",
+    background: "linear-gradient(45deg, #FBDA61 0%, #FF5ACD 100%)",
+  },
+  {
+    name: "Ocean Blue",
+    background: "linear-gradient(to right, #2E3192, #1BFFFF)",
+  },
+  {
+    name: "Sanguine",
+    background: "linear-gradient(to right, #D4145A, #FBB03B)",
+  },
+  {
+    name: "Lusty Lavender",
+    background: "linear-gradient(to right, #662D8C, #ED1E79)",
+  },
+  {
+    name: "Emerald Water",
+    background: "linear-gradient(to right, #348F50, #56B4D3)",
+  },
+  {
+    name: "Lemon Twist",
+    background: "linear-gradient(to right, #3CA55C, #B5AC49)",
+  },
+  {
+    name: "Frozen Berry",
+    background: "linear-gradient(to right, #5C258D, #4389A2)",
+  },
 ];
 
 const CONTAINER_FIXED_HEIGHT = 600;
@@ -61,14 +182,14 @@ const CONTAINER_FIXED_HEIGHT = 600;
 const App: React.FC = () => {
   const [state, setState] = useState<EditorState>({
     screenshot: null,
-    background: gradientPresets[0].background,  // Change this line
+    background: gradientPresets[0].background, // Change this line
     padding: 10,
     borderRadius: 8,
     shadow: 30,
     shadowIntensity: 0.3,
     containerWidth: 100,
     containerHeight: 100,
-    activeTab: 'Gradients',
+    activeTab: "Gradients",
     blur: 0,
   });
 
@@ -86,8 +207,8 @@ const App: React.FC = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -95,7 +216,7 @@ const App: React.FC = () => {
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
     }
   }, [showModal]);
@@ -106,17 +227,17 @@ const App: React.FC = () => {
 
     if (containerWidth > 600 || imgHeight > containerHeight) {
       // Image is larger than the container, set border radius to 50% of the slider max
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        borderRadius: Math.min(25, prev.borderRadius) // 25 is 50% of the max slider value (50)
+        borderRadius: Math.min(25, prev.borderRadius), // 25 is 50% of the max slider value (50)
       }));
     }
 
     // Add this condition to set padding to 50% when image height is >= container height
     if (imgHeight >= containerHeight) {
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        padding: 15 // 15 is 50% of the max padding slider value (30)
+        padding: 15, // 15 is 50% of the max padding slider value (30)
       }));
     }
   };
@@ -131,7 +252,10 @@ const App: React.FC = () => {
           adjustImageSettings(img.width, img.height);
         };
         img.src = e.target?.result as string;
-        setState((prev) => ({ ...prev, screenshot: e.target?.result as string }));
+        setState((prev) => ({
+          ...prev,
+          screenshot: e.target?.result as string,
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -147,7 +271,9 @@ const App: React.FC = () => {
     event.preventDefault();
     const files = event.dataTransfer.files;
     if (files && files[0]) {
-      handleFileUpload({ target: { files } } as React.ChangeEvent<HTMLInputElement>);
+      handleFileUpload({
+        target: { files },
+      } as React.ChangeEvent<HTMLInputElement>);
     }
   };
 
@@ -157,26 +283,28 @@ const App: React.FC = () => {
       const items = event.clipboardData?.items;
       if (items) {
         for (const item of items) {
-          if (item.type.startsWith('image/')) {
+          if (item.type.startsWith("image/")) {
             const file = item.getAsFile();
             if (file) {
-              handleFileUpload({ target: { files: [file] } } as React.ChangeEvent<HTMLInputElement>);
+              handleFileUpload({
+                target: { files: [file] },
+              } as React.ChangeEvent<HTMLInputElement>);
             }
           }
         }
       }
     };
 
-    window.addEventListener('paste', handlePaste);
+    window.addEventListener("paste", handlePaste);
     return () => {
-      window.removeEventListener('paste', handlePaste);
+      window.removeEventListener("paste", handlePaste);
     };
   }, []);
 
   const downloadImage = useCallback(() => {
     if (screenshotRef.current) {
       const node = screenshotRef.current;
-      
+
       // Temporarily adjust styles for capture
       const originalStyles = {
         width: node.style.width,
@@ -186,42 +314,45 @@ const App: React.FC = () => {
         borderRadius: node.style.borderRadius,
         overflow: node.style.overflow,
       };
-      
+
       node.style.width = `${node.offsetWidth}px`;
       node.style.height = `${node.offsetHeight}px`;
-      node.style.maxWidth = 'none';
-      node.style.maxHeight = 'none';
-      node.style.borderRadius = '0'; // Remove border radius
-      node.style.overflow = 'visible'; // Ensure nothing is cut off
+      node.style.maxWidth = "none";
+      node.style.maxHeight = "none";
+      node.style.borderRadius = "0"; // Remove border radius
+      node.style.overflow = "visible"; // Ensure nothing is cut off
 
       // Use modern-screenshot's domToPng with improved options
       domToPng(node, {
         filter: (n) => {
           // Exclude problematic stylesheets
-          if ((n as Element).tagName === 'LINK' && (n as Element).getAttribute('rel') === 'stylesheet') {
+          if (
+            (n as Element).tagName === "LINK" &&
+            (n as Element).getAttribute("rel") === "stylesheet"
+          ) {
             return false;
           }
           return true;
         },
         quality: 1, // Set to maximum quality
-        scale: (isMobile ? 1.6 : 2), // Increase scale for better resolution
+        scale: isMobile ? 1.6 : 2, // Increase scale for better resolution
         style: {
-          'transform': `scale(${isMobile ? 1.6 : 2})`, // Reset any transforms
-          'transform-origin': 'top left',
-          'border-radius': '0', // Ensure no border radius
+          transform: `scale(${isMobile ? 1.6 : 2})`, // Reset any transforms
+          "transform-origin": "top left",
+          "border-radius": "0", // Ensure no border radius
         },
         width: node.offsetWidth * (isMobile ? 1.6 : 2), // Double the width
         height: node.offsetHeight * (isMobile ? 1.6 : 2), // Double the height
       })
         .then((dataUrl) => {
-          const link = document.createElement('a');
-          link.download = 'edited_screenshot.png';
+          const link = document.createElement("a");
+          link.download = "edited_screenshot.png";
           link.href = dataUrl;
           link.click();
           setShowModal(true); // Show the modal after download
         })
         .catch((err) => {
-          console.error('Error generating image:', err);
+          console.error("Error generating image:", err);
         })
         .finally(() => {
           // Restore original styles
@@ -233,7 +364,7 @@ const App: React.FC = () => {
   const copyImageToClipboard = useCallback(() => {
     if (screenshotRef.current) {
       const node = screenshotRef.current;
-      
+
       // Temporarily adjust styles for capture (same as in downloadImage)
       const originalStyles = {
         width: node.style.width,
@@ -243,29 +374,32 @@ const App: React.FC = () => {
         borderRadius: node.style.borderRadius,
         overflow: node.style.overflow,
       };
-      
+
       Object.assign(node.style, {
         width: `${node.offsetWidth}px`,
         height: `${node.offsetHeight}px`,
-        maxWidth: 'none',
-        maxHeight: 'none',
-        borderRadius: '0',
-        overflow: 'visible',
+        maxWidth: "none",
+        maxHeight: "none",
+        borderRadius: "0",
+        overflow: "visible",
       });
 
       domToPng(node, {
         filter: (n) => {
-          if ((n as Element).tagName === 'LINK' && (n as Element).getAttribute('rel') === 'stylesheet') {
+          if (
+            (n as Element).tagName === "LINK" &&
+            (n as Element).getAttribute("rel") === "stylesheet"
+          ) {
             return false;
           }
           return true;
         },
         quality: 1,
-        scale: (isMobile ? 1.6 : 2),
+        scale: isMobile ? 1.6 : 2,
         style: {
-          'transform': `scale(${isMobile ? 1.6 : 2})`,
-          'transform-origin': 'top left',
-          'border-radius': '0',
+          transform: `scale(${isMobile ? 1.6 : 2})`,
+          "transform-origin": "top left",
+          "border-radius": "0",
         },
         width: node.offsetWidth * (isMobile ? 1.6 : 2),
         height: node.offsetHeight * (isMobile ? 1.6 : 2),
@@ -273,21 +407,24 @@ const App: React.FC = () => {
         .then((dataUrl) => {
           // Convert data URL to Blob
           fetch(dataUrl)
-            .then(res => res.blob())
-            .then(blob => {
+            .then((res) => res.blob())
+            .then((blob) => {
               // Create a new ClipboardItem
               const item = new ClipboardItem({ "image/png": blob });
               // Write the ClipboardItem to the clipboard
-              navigator.clipboard.write([item]).then(() => {
-                setCopySuccess(true);
-                setTimeout(() => setCopySuccess(false), 2000);
-              }, (err) => {
-                console.error("Failed to copy image: ", err);
-              });
+              navigator.clipboard.write([item]).then(
+                () => {
+                  setCopySuccess(true);
+                  setTimeout(() => setCopySuccess(false), 2000);
+                },
+                (err) => {
+                  console.error("Failed to copy image: ", err);
+                }
+              );
             });
         })
         .catch((err) => {
-          console.error('Error generating image:', err);
+          console.error("Error generating image:", err);
         })
         .finally(() => {
           // Restore original styles
@@ -298,67 +435,71 @@ const App: React.FC = () => {
 
   const containerStyle = {
     width: `${state.containerWidth}%`,
-    height: isMobile ? `${Math.max(300, Math.min(state.containerHeight * 5, 600))}px` : `${state.containerHeight}%`,
-    maxWidth: isMobile ? '100%' : '1280px',
-    maxHeight: isMobile ? '600px' : '720px',
-    position: 'relative' as const,
-    overflow: 'hidden',
+    height: isMobile
+      ? `${Math.max(300, Math.min(state.containerHeight * 5, 600))}px`
+      : `${state.containerHeight}%`,
+    maxWidth: isMobile ? "100%" : "1280px",
+    maxHeight: isMobile ? "600px" : "720px",
+    position: "relative" as const,
+    overflow: "hidden",
   };
 
   const backgroundWrapperStyle = {
-    position: 'absolute' as const,
-    top: '-10px',
-    left: '-10px',
-    right: '-10px',
-    bottom: '-10px',
-    overflow: 'hidden',
+    position: "absolute" as const,
+    top: "-10px",
+    left: "-10px",
+    right: "-10px",
+    bottom: "-10px",
+    overflow: "hidden",
   };
 
   const backgroundStyle = {
-    position: 'absolute' as const,
-    top: '0',
-    left: '0',
-    right: '0',
-    bottom: '0',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: state.activeTab !== 'Gradients' ? '#000' : 'transparent',
+    position: "absolute" as const,
+    top: "0",
+    left: "0",
+    right: "0",
+    bottom: "0",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: state.activeTab !== "Gradients" ? "#000" : "transparent",
     filter: `blur(${state.blur}px)`,
-    transform: 'scale(1.1)', // Slightly scale up the background to cover blur edges
+    transform: "scale(1.1)", // Slightly scale up the background to cover blur edges
   };
 
   const wallpaperStyle = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover' as const,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover" as const,
   };
 
   const contentStyle = {
-    position: 'absolute' as const,
-    top: '0',
-    left: '0',
-    right: '0',
-    bottom: '0',
+    position: "absolute" as const,
+    top: "0",
+    left: "0",
+    right: "0",
+    bottom: "0",
     padding: `${state.padding}%`,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: `18px !important`,
   };
 
   const imageContainerStyle = {
-    position: 'relative' as const,
-    display: 'inline-block',
+    position: "relative" as const,
+    display: "inline-block",
     borderRadius: `${state.borderRadius}px`,
-    overflow: 'hidden',
-    boxShadow: `0 ${state.shadow}px ${state.shadow * 2}px rgba(0,0,0,${state.shadowIntensity})`,
+    overflow: "hidden",
+    boxShadow: `0 ${state.shadow}px ${state.shadow * 2}px rgba(0,0,0,${
+      state.shadowIntensity
+    })`,
   };
 
   const imageStyle = {
-    maxWidth: '100%',
-    maxHeight: '100%',
-    objectFit: 'contain' as const,
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain" as const,
   };
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -367,52 +508,66 @@ const App: React.FC = () => {
     adjustImageSettings(img.width, img.height);
   };
 
-  const handleTabChange = (newTab: 'macOS' | 'Gradients' | 'Wallpapers') => {
-    setState(prev => ({
+  const handleTabChange = (newTab: "macOS" | "Gradients" | "Wallpapers") => {
+    setState((prev) => ({
       ...prev,
       activeTab: newTab,
-      background: newTab === 'macOS' ? macOSPresets[0].background :
-        newTab === 'Gradients' ? gradientPresets[0].background :
-          wallpapers[0].background
+      background:
+        newTab === "macOS"
+          ? macOSPresets[0].background
+          : newTab === "Gradients"
+          ? gradientPresets[0].background
+          : wallpapers[0].background,
     }));
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 sm:p-8 relative">
-      <h1 className="text-center mb-4 sm:mb-8">
-        <span className="pacifico-regular text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 [text-shadow:0_0_rgba(0,0,0,0.1)] pl-1">prettify.pro</span>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 sm:p-8 relative">
+      <h1 className="text-center mb-8 sm:mb-12">
+        <span className="pacifico-regular text-3xl sm:text-4xl font-bold text-gray-900">
+          prettify
+        </span>
       </h1>
-      <div id="mainapp" className="bg-white shadow-lg p-4 sm:p-8 w-full max-w-7xl relative">
-        {/* Product Hunt badge positioned above mainapp */}
-        <div className="absolute -top-16 right-0 hidden sm:flex items-center space-x-2">
-          <a href="https://github.com/shobhit99/prettify" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-800">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-          </a>
-          <ProductHuntBadge />
-        </div>
-        <div className="flex flex-wrap -mx-2 sm:-mx-4">
-          <div className="w-full lg:w-3/4 px-2 sm:px-4 mb-4 flex flex-col items-center overflow-x-hidden">
+      <div
+        id="mainapp"
+        className="bg-white w-full max-w-7xl relative"
+      >
+        <div className="flex flex-wrap gap-8">
+          <div className="w-full lg:flex-1 flex flex-col items-center">
             <div
               ref={screenshotRef}
-              className="relative overflow-hidden rounded-lg mb-4 w-full"
+              className="relative overflow-hidden rounded-lg mb-6 w-full border border-gray-200"
               style={containerStyle}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
             >
               <div style={backgroundWrapperStyle}>
                 <div style={backgroundStyle}>
-                  {state.activeTab === 'macOS' || state.activeTab === 'Wallpapers' ? (
-                    <img src={state.background.replace('url(', '').replace(')', '')} alt="Wallpaper" style={wallpaperStyle} />
+                  {state.activeTab === "macOS" ||
+                  state.activeTab === "Wallpapers" ? (
+                    <img
+                      src={state.background
+                        .replace("url(", "")
+                        .replace(")", "")}
+                      alt="Wallpaper"
+                      style={wallpaperStyle}
+                    />
                   ) : (
-                    <div style={{ ...wallpaperStyle, background: state.background }} />
+                    <div
+                      style={{
+                        ...wallpaperStyle,
+                        background: state.background,
+                      }}
+                    />
                   )}
                 </div>
               </div>
               <div style={contentStyle}>
                 {state.screenshot ? (
-                  <div className="relative flex items-center justify-center" style={{ width: '100%', height: '100%' }}>
+                  <div
+                    className="relative flex items-center justify-center"
+                    style={{ width: "100%", height: "100%" }}
+                  >
                     <div style={imageContainerStyle}>
                       <img
                         src={state.screenshot}
@@ -423,11 +578,17 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-white text-center">+ Drag, Upload or Paste your screenshot here</p>
+                  <div className="flex items-center justify-center h-full p-8">
+                    <div className="border-2 border-dashed border-white/30 rounded-lg p-12 text-center hover:border-white/50 transition-colors bg-white/5 backdrop-blur-sm">
+                      <Upload className="mx-auto mb-3 text-white/60" size={32} />
+                      <p className="text-white/90 text-sm font-medium mb-1">Drop, upload, or paste your image</p>
+                      <p className="text-white/50 text-xs">PNG, JPG, or GIF</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap gap-2 justify-center">
               <input
                 type="file"
                 accept="image/*"
@@ -437,107 +598,156 @@ const App: React.FC = () => {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1.5 px-3 rounded flex items-center text-sm"
+                className="bg-gray-900 hover:bg-black text-white font-medium py-2 px-4 rounded-md flex items-center text-sm transition-colors"
               >
                 <Upload className="mr-1.5" size={16} />
-                Upload Image
+                Upload
               </button>
               {state.screenshot && (
                 <>
                   <button
                     onClick={downloadImage}
-                    className="bg-green-500 hover:bg-green-600 text-white font-medium py-1.5 px-3 rounded flex items-center text-sm"
+                    className="bg-gray-900 hover:bg-black text-white font-medium py-2 px-4 rounded-md flex items-center text-sm transition-colors"
                   >
                     <Download className="mr-1.5" size={16} />
-                    Download Image
+                    Download
                   </button>
                   <button
                     onClick={copyImageToClipboard}
-                    className={`bg-blue-500 hover:bg-blue-600 text-white font-medium py-1.5 px-3 rounded flex items-center text-sm`}
+                    className="bg-gray-900 hover:bg-black text-white font-medium py-2 px-4 rounded-md flex items-center text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={copySuccess}
                   >
                     <div className="w-4 h-4 mr-1.5 relative">
-                      <Copy className={`absolute transition-opacity duration-300 ${copySuccess ? 'opacity-0' : 'opacity-100'}`} size={16} />
-                      <Check className={`absolute transition-opacity duration-300 ${copySuccess ? 'opacity-100' : 'opacity-0'}`} size={16} />
+                      <Copy
+                        className={`absolute transition-opacity duration-200 ${
+                          copySuccess ? "opacity-0" : "opacity-100"
+                        }`}
+                        size={16}
+                      />
+                      <Check
+                        className={`absolute transition-opacity duration-200 ${
+                          copySuccess ? "opacity-100" : "opacity-0"
+                        }`}
+                        size={16}
+                      />
                     </div>
-                    {'Copy to Clipboard'}
+                    {copySuccess ? "Copied" : "Copy"}
                   </button>
                 </>
               )}
             </div>
           </div>
-          <div className="w-full lg:w-1/4 px-2 sm:px-4">
+          <div className="w-full lg:w-64">
             <div className="mb-6">
-              <div className="flex mb-4 !rounded-sm">
+              <h3 className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                Background
+              </h3>
+              <div className="flex gap-1 mb-4">
                 <button
-                  className={`flex-1 py-1 px-2 text-sm text-center ${state.activeTab === 'Gradients' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => handleTabChange('Gradients')}
+                  className={`flex-1 py-1.5 px-2 text-xs font-medium text-center rounded transition-colors ${
+                    state.activeTab === "Gradients"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                  onClick={() => handleTabChange("Gradients")}
                 >
                   Gradients
                 </button>
                 <button
-                  className={`flex-1 py-1 px-2 text-sm text-center ${state.activeTab === 'macOS' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => handleTabChange('macOS')}
+                  className={`flex-1 py-1.5 px-2 text-xs font-medium text-center rounded transition-colors ${
+                    state.activeTab === "macOS"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                  onClick={() => handleTabChange("macOS")}
                 >
                   macOS
                 </button>
                 <button
-                  className={`flex-1 py-1 px-2 text-sm text-center ${state.activeTab === 'Wallpapers' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                  onClick={() => handleTabChange('Wallpapers')}
+                  className={`flex-1 py-1.5 px-2 text-xs font-medium text-center rounded transition-colors ${
+                    state.activeTab === "Wallpapers"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                  onClick={() => handleTabChange("Wallpapers")}
                 >
                   Wallpapers
                 </button>
               </div>
-              <div className="overflow-x-auto -mx-4 px-4 mb-4"> {/* Added margin-bottom */}
-                <div className="flex space-x-2 border border-gray-300 rounded-md p-2" style={{ width: state.activeTab === 'Gradients' ? '500px' : '600px' }}>
-                  {(state.activeTab === 'macOS' ? macOSPresets :
-                    state.activeTab === 'Gradients' ? gradientPresets :
-                      wallpapers).map((preset, index) => (
-                        <button
-                          key={index}
-                          className="flex-shrink-0 w-12 h-12 rounded bg-cover bg-center"
-                          style={{ backgroundImage: preset.background }}
-                          onClick={() => setState((prev) => ({ ...prev, background: preset.background }))}
-                        >
-                        </button>
-                      ))}
+              <div className="overflow-x-auto -mx-4 px-4 mb-6">
+                <div
+                  className="flex gap-2"
+                  style={{
+                    width: state.activeTab === "Gradients" ? "500px" : "600px",
+                  }}
+                >
+                  {(state.activeTab === "macOS"
+                    ? macOSPresets
+                    : state.activeTab === "Gradients"
+                    ? gradientPresets
+                    : wallpapers
+                  ).map((preset, index) => (
+                    <button
+                      key={index}
+                      className="flex-shrink-0 w-12 h-12 rounded bg-cover bg-center border border-gray-200 hover:border-gray-400 transition-colors"
+                      style={{ backgroundImage: preset.background }}
+                      onClick={() =>
+                        setState((prev) => ({
+                          ...prev,
+                          background: preset.background,
+                        }))
+                      }
+                    ></button>
+                  ))}
                 </div>
               </div>
             </div>
-            <div className="mb-6">
-              <div className="space-y-3">
-                {/* Remove the isMobile condition to show these controls on all devices */}
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                Adjust
+              </h3>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <Maximize className="mr-2" size={16} />
-                    Container Width
+                                    <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <Maximize className="mr-1.5 text-gray-400" size={12} />
+                    Width
                   </label>
                   <input
                     type="range"
-                    min={isMobile ? "70" : "35"}  // Increased minimum value for mobile
+                    min={isMobile ? "70" : "35"}
                     max="100"
                     value={state.containerWidth}
-                    onChange={(e) => setState((prev) => ({ ...prev, containerWidth: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        containerWidth: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <Maximize className="mr-2" size={16} />
-                    Container Height
+                  <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <Maximize className="mr-1.5 text-gray-400" size={12} />
+                    Height
                   </label>
                   <input
                     type="range"
                     min={isMobile ? "60" : "35"}
                     max={isMobile ? "120" : "100"}
                     value={state.containerHeight}
-                    onChange={(e) => setState((prev) => ({ ...prev, containerHeight: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        containerHeight: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <PanelTop className="mr-2" size={16} />
+                  <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <PanelTop className="mr-1.5 text-gray-400" size={12} />
                     Padding
                   </label>
                   <input
@@ -545,42 +755,57 @@ const App: React.FC = () => {
                     min="5"
                     max="30"
                     value={state.padding}
-                    onChange={(e) => setState((prev) => ({ ...prev, padding: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        padding: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <CornerUpRight className="mr-2" size={16} />
-                    Border Radius
+                  <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <CornerUpRight className="mr-1.5 text-gray-400" size={12} />
+                    Radius
                   </label>
                   <input
                     type="range"
                     min="0"
                     max="50"
                     value={state.borderRadius}
-                    onChange={(e) => setState((prev) => ({ ...prev, borderRadius: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        borderRadius: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <Cloud className="mr-2" size={16} />
-                    Shadow Size
+                  <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <Cloud className="mr-1.5 text-gray-400" size={12} />
+                    Shadow
                   </label>
                   <input
                     type="range"
                     min="0"
                     max="50"
                     value={state.shadow}
-                    onChange={(e) => setState((prev) => ({ ...prev, shadow: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        shadow: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <Sun className="mr-2" size={16} />
-                    Shadow Intensity
+                  <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <Sun className="mr-1.5 text-gray-400" size={12} />
+                    Intensity
                   </label>
                   <input
                     type="range"
@@ -588,22 +813,32 @@ const App: React.FC = () => {
                     max="1"
                     step="0.01"
                     value={state.shadowIntensity}
-                    onChange={(e) => setState((prev) => ({ ...prev, shadowIntensity: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        shadowIntensity: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <SunDim className="mr-2" size={16} />
-                    Background Blur
+                  <label className="flex items-center text-xs font-medium text-gray-600 mb-2">
+                    <SunDim className="mr-1.5 text-gray-400" size={12} />
+                    Blur
                   </label>
                   <input
                     type="range"
                     min="0"
                     max="20"
                     value={state.blur}
-                    onChange={(e) => setState((prev) => ({ ...prev, blur: Number(e.target.value) }))}
-                    className="w-full"
+                    onChange={(e) =>
+                      setState((prev) => ({
+                        ...prev,
+                        blur: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full accent-gray-900"
                   />
                 </div>
               </div>
@@ -613,34 +848,64 @@ const App: React.FC = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md shadow-lg transform transition-all duration-300 ease-in-out relative">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-8 max-w-sm shadow-xl relative">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-900 transition-colors"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
-            <img src={"https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/shobhit.png"} alt="Logo" className="mb-4 mx-auto w-[100px] h-[120px]" />
-            <h2 className="text-3xl font-bold mb-4 text-center text-purple-600">Thank you!</h2>
-            <p className="mb-6 text-gray-700 text-center">I hope you enjoyed using prettify.pro!</p>
-            <div className="flex flex-col items-center space-y-4 mb-6">
+            <img
+              src={
+                "https://iqeomzolnxhweqyhrnsg.supabase.co/storage/v1/object/public/sqlilot/shobhit.png"
+              }
+              alt="Logo"
+              className="mb-4 mx-auto w-[80px] h-[96px]"
+            />
+            <h2 className="text-2xl font-bold mb-2 text-center text-gray-900">
+              Thank you!
+            </h2>
+            <p className="mb-6 text-gray-600 text-center text-sm">
+              Hope you enjoyed using prettify
+            </p>
+            <div className="flex flex-col items-center gap-2">
               <button
-                onClick={() => window.open('https://x.com/nullbytes00', '_blank')}
-                className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-6 rounded-md flex items-center transition duration-300 ease-in-out transform hover:scale-105"
+                onClick={() =>
+                  window.open("https://x.com/nullbytes00", "_blank")
+                }
+                className="w-full bg-gray-900 hover:bg-black text-white font-medium py-2 px-4 rounded-md flex items-center justify-center transition-colors text-sm"
               >
-                <span className="mr-2">Follow me on</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="mr-2" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <span className="mr-2">Follow on</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
               </button>
               <button
-                onClick={() => window.open('https://shipfa.st/?via=shobhit', '_blank')}
-                className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-6 rounded-md flex items-center transition duration-300 ease-in-out transform hover:scale-105"
+                onClick={() =>
+                  window.open("https://shipfa.st/?via=shobhit", "_blank")
+                }
+                className="w-full bg-gray-900 hover:bg-black text-white font-medium py-2 px-4 rounded-md flex items-center justify-center transition-colors text-sm"
               >
-                <span className="mr-2">⚡ Ship Your Startup Fast</span>
+                <span>⚡ Ship Your Startup Fast</span>
               </button>
-              <a href="https://www.buymeacoffee.com/shobhit99" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" className='!h-10' /></a>
+              <a
+                href="https://www.buymeacoffee.com/shobhit99"
+                target="_blank"
+                className="w-full mt-1"
+              >
+                <img
+                  src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+                  alt="Buy Me A Coffee"
+                  className="h-9 w-full rounded-md"
+                />
+              </a>
             </div>
           </div>
         </div>
